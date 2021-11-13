@@ -144,7 +144,7 @@ public class NetworkFragment extends Fragment {
             }).start();
         });
 
-        return root;
+        return root ;
     }
 
     @Override
