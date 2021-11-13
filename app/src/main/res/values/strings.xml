@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">DomoTest</string>
+    <string name="title_home">Home</string>
+    <string name="title_lights">Lights</string>
+    <string name="title_network">Network</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+
+    <!-- NETWORK TAB-->
+    <string name="network_api_version">Get API Version</string>
+    <string name="network_login_status">Get Login Status</string>
+    <string name="network_open_session">Open Session</string>
+    <string name="network_list_interfaces">List Interfaces</string>
+    <string name="network_list_devices">List Devices</string>
+
+    <!-- JEEDOM TAB-->
+    <string name="jeedom_weather">Get Waether from Jeedom</string>
+    <string name="jeedom_turn_light">Turn Light</string>
+</resources>
