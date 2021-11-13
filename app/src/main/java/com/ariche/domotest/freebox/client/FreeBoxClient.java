@@ -12,12 +12,14 @@ import com.ariche.domotest.freebox.model.OpenSessionInput;
 import com.ariche.domotest.freebox.model.OpenSessionOutput;
 import com.ariche.domotest.http.client.HttpClient;
 import com.ariche.domotest.http.error.HttpClientException;
+import com.ariche.domotest.utils.PreferenceHelper;
 import com.ariche.domotest.utils.PropertyUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.codec.digest.HmacUtils;
 
+import java.util.Arrays;
 import java.util.Properties;
 
 import okhttp3.Headers;
@@ -33,12 +35,15 @@ public final class FreeBoxClient extends HttpClient {
 
     private static final String AUTH_HEADER = "X-Fbx-App-Auth";
 
+    private final Context context;
     private final Properties properties;
     private String sessionToken;
 
     public FreeBoxClient(final Context context) {
         super(PropertyUtils.loadFreeBoxProperties(context).getProperty("freebox.base_url"));
-        properties = PropertyUtils.loadFreeBoxProperties(context);
+        this.context = context;
+        this.properties = PropertyUtils.loadFreeBoxProperties(context);
+        this.sessionToken = readFreeBoxSessionToken();
     }
 
     public FreeBoxApiVersion getApiVersion() throws HttpClientException {
@@ -72,6 +77,7 @@ public final class FreeBoxClient extends HttpClient {
 
         if (a.isSuccess()) {
             this.sessionToken = a.getResult().getSessionToken();
+            storeSessionToken(this.sessionToken);
         }
 
         return a;
@@ -89,7 +95,29 @@ public final class FreeBoxClient extends HttpClient {
 
     public FreeBoxResponse<FreeBoxDevice[]> listConnectedDevices(final String networkInterface) throws HttpClientException {
         final Headers headers = new Headers.Builder().add(AUTH_HEADER, sessionToken).build();
-        return super.getForType(LIST_DEVICES + networkInterface, headers,
+        final FreeBoxResponse<FreeBoxDevice[]> response = super.getForType(LIST_DEVICES + networkInterface, headers,
                 new TypeReference<FreeBoxResponse<FreeBoxDevice[]>>() {});
+
+        if (response.isSuccess()) {
+            Arrays.stream(response.getResult())
+                    .filter(device -> device.getName().equalsIgnoreCase("pi"))
+                    .findFirst()
+                    .map(FreeBoxDevice::getAddress)
+                    .ifPresent(this::storeRaspberryAddress);
+        }
+
+        return response;
+    }
+
+    private String readFreeBoxSessionToken() {
+        return PreferenceHelper.getPreference("free-box-session-token", null, context);
+    }
+
+    private void storeRaspberryAddress(final String address) {
+        PreferenceHelper.storePreference("pi-address", address, context);
+    }
+
+    private void storeSessionToken(final String sessionToken) {
+        PreferenceHelper.storePreference("free-box-session-token", sessionToken, context);
     }
 }

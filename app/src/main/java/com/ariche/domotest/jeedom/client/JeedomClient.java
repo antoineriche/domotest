@@ -1,23 +1,35 @@
 package com.ariche.domotest.jeedom.client;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.util.Log;
 
 import com.ariche.domotest.http.client.HttpClient;
 import com.ariche.domotest.http.error.HttpClientException;
+import com.ariche.domotest.utils.PreferenceHelper;
 import com.ariche.domotest.utils.PropertyUtils;
 
+import java.util.Objects;
 import java.util.Properties;
 
-public final class JeedomClient extends HttpClient {
+import static com.ariche.domotest.utils.LogUtils.logInfo;
+
+public final class JeedomClient extends HttpClient implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     private String piAddress;
+    private final Context context;
     private final String apiKey;
     private final String apiContext;
 
     public JeedomClient(final Context context) {
         final Properties properties = PropertyUtils.loadJeedomProperties(context);
-        apiKey = properties.getProperty("api.key");
-        apiContext = properties.getProperty("api.context");
+        this.apiKey = properties.getProperty("api.key");
+        this.context = context;
+        this.apiContext = properties.getProperty("api.context");
+        final String raspberryAddress = readRaspberryAddress();
+        if (Objects.nonNull(raspberryAddress)) {
+            setPiAddress(raspberryAddress);
+        }
     }
 
     public void setPiAddress(String piAddress) {
@@ -42,4 +54,12 @@ public final class JeedomClient extends HttpClient {
         return super.get(endPoint);
     }
 
+    private String readRaspberryAddress() {
+        return PreferenceHelper.getPreference("pi-address", null, context);
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+        logInfo(s);
+    }
 }

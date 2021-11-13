@@ -12,25 +12,19 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.ariche.domotest.databinding.FragmentNetworkBinding;
-import com.ariche.domotest.freebox.model.FreeBoxApiVersion;
 import com.ariche.domotest.freebox.client.FreeBoxClient;
 import com.ariche.domotest.freebox.client.FreeBoxResponse;
+import com.ariche.domotest.freebox.model.FreeBoxApiVersion;
 import com.ariche.domotest.freebox.model.FreeBoxDevice;
 import com.ariche.domotest.freebox.model.InterfaceOutput;
 import com.ariche.domotest.freebox.model.LoginStatusOutput;
 import com.ariche.domotest.freebox.model.OpenSessionOutput;
 import com.ariche.domotest.jeedom.client.JeedomClient;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-
-import static com.ariche.domotest.utils.LogUtils.logError;
 import static com.ariche.domotest.utils.LogUtils.logInfo;
 
 public class NetworkFragment extends Fragment {
@@ -136,7 +130,7 @@ public class NetworkFragment extends Fragment {
         binding.buttonJeedomLight.setOnClickListener(view -> {
             new Thread(() -> {
                 try {
-                    final String weather = jeedomClient.toggleLight(!lightOn);
+                    jeedomClient.toggleLight(!lightOn);
                     lightOn = !lightOn;
                 } catch (Exception e) {
                     getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show());
@@ -144,7 +138,7 @@ public class NetworkFragment extends Fragment {
             }).start();
         });
 
-        return root ;
+        return root;
     }
 
     @Override
@@ -172,4 +166,5 @@ public class NetworkFragment extends Fragment {
         logInfo(s);
         binding.textviewPi.setText(s);
     }
+
 }
