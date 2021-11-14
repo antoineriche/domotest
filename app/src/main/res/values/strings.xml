@@ -13,7 +13,21 @@
     <string name="network_list_interfaces">List Interfaces</string>
     <string name="network_list_devices">List Devices</string>
 
+    <string name="network_freebox">FreeBox</string>
+    <string name="network_raspberry">Raspberry</string>
+    <string name="network_raspberry_discover">Discover PI</string>
+
+    <plurals name="network_devices_found">
+        <item quantity="one">%d connected device</item>
+        <item quantity="other">%d connected device(s)</item>
+    </plurals>
+
+    <!-- LIGHTS TAB-->
+
+    <string name="network_devices_found">%d connected device(s)</string>
+
     <!-- JEEDOM TAB-->
     <string name="jeedom_weather">Get Waether from Jeedom</string>
     <string name="jeedom_turn_light">Turn Light</string>
+    <string name="jeedom_turn_light_status">Light Status</string>
 </resources>

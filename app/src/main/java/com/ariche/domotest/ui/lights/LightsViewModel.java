@@ -1,19 +1,17 @@
 package com.ariche.domotest.ui.lights;
 
-import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import lombok.Getter;
+
+@Getter
 public class LightsViewModel extends ViewModel {
 
-    private MutableLiveData<String> mText;
+    private MutableLiveData<String> mButtonToggleText;
 
     public LightsViewModel() {
-        mText = new MutableLiveData<>();
-        mText.setValue("This is lights fragment");
+        mButtonToggleText = new MutableLiveData<>();
     }
 
-    public LiveData<String> getText() {
-        return mText;
-    }
 }

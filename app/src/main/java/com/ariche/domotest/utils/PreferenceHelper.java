@@ -3,14 +3,22 @@ package com.ariche.domotest.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-public class PreferenceHelper {
+public final class PreferenceHelper {
 
     private static final String ROOT_PREFERENCES_KEY = "com.ariche.domotest";
+
+    public static final String PI_ADDRESS = "pi-address";
+    public static final String FREE_BOX_SESSION_TOKEN = "free-box-session-token";
 
     public static String getPreference(final String key,
                                        final String defaultValue,
                                        final Context context) {
         return getRootPreferences(context).getString(key, defaultValue);
+    }
+
+    public static String getPreference(final String key,
+                                       final Context context) {
+        return getPreference(key, null, context);
     }
 
     public static void storePreference(final String key,
@@ -20,8 +28,18 @@ public class PreferenceHelper {
         prefs.edit().putString(key, value).apply();
     }
 
-    private static SharedPreferences getRootPreferences(final Context context) {
+    public static SharedPreferences getRootPreferences(final Context context) {
         return context.getSharedPreferences(ROOT_PREFERENCES_KEY, Context.MODE_PRIVATE);
+    }
+
+    public static void registerSharedPreferencesListener(final Context context,
+                                                         final SharedPreferences.OnSharedPreferenceChangeListener listener) {
+        getRootPreferences(context).registerOnSharedPreferenceChangeListener(listener);
+    }
+
+    public static void unregisterSharedPreferencesListener(final Context context,
+                                                           final SharedPreferences.OnSharedPreferenceChangeListener listener) {
+        getRootPreferences(context).unregisterOnSharedPreferenceChangeListener(listener);
     }
 
     private PreferenceHelper() {

@@ -99,8 +99,9 @@ public final class FreeBoxClient extends HttpClient {
                 new TypeReference<FreeBoxResponse<FreeBoxDevice[]>>() {});
 
         if (response.isSuccess()) {
+            final String piName = properties.getProperty("raspberry.host");
             Arrays.stream(response.getResult())
-                    .filter(device -> device.getName().equalsIgnoreCase("pi"))
+                    .filter(device -> device.getName().equalsIgnoreCase(piName))
                     .findFirst()
                     .map(FreeBoxDevice::getAddress)
                     .ifPresent(this::storeRaspberryAddress);
@@ -109,15 +110,20 @@ public final class FreeBoxClient extends HttpClient {
         return response;
     }
 
+    public FreeBoxResponse<FreeBoxDevice[]> listPublicInterfaceConnectedDevices() throws HttpClientException {
+        final String publicInterface = properties.getProperty("raspberry.interface");
+        return listConnectedDevices(publicInterface);
+    }
+
     private String readFreeBoxSessionToken() {
-        return PreferenceHelper.getPreference("free-box-session-token", null, context);
+        return PreferenceHelper.getPreference(PreferenceHelper.FREE_BOX_SESSION_TOKEN, context);
     }
 
     private void storeRaspberryAddress(final String address) {
-        PreferenceHelper.storePreference("pi-address", address, context);
+        PreferenceHelper.storePreference(PreferenceHelper.PI_ADDRESS, address, context);
     }
 
     private void storeSessionToken(final String sessionToken) {
-        PreferenceHelper.storePreference("free-box-session-token", sessionToken, context);
+        PreferenceHelper.storePreference(PreferenceHelper.FREE_BOX_SESSION_TOKEN, sessionToken, context);
     }
 }

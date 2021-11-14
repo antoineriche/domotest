@@ -4,7 +4,7 @@ import android.util.Log;
 
 import org.jetbrains.annotations.NotNull;
 
-public class LogUtils {
+public final class LogUtils {
 
     private static final String TAG = "DOMOTEST";
 

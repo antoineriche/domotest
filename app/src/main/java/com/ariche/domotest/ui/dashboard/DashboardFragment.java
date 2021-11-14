@@ -1,24 +1,35 @@
 package com.ariche.domotest.ui.dashboard;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.ariche.domotest.R;
+import com.ariche.domotest.adapters.ScenarioAdapter;
 import com.ariche.domotest.databinding.FragmentDashboardBinding;
+import com.ariche.domotest.http.error.HttpClientException;
+import com.ariche.domotest.jeedom.client.JeedomClient;
+import com.ariche.domotest.jeedom.model.Scenario;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.ariche.domotest.utils.LogUtils.logInfo;
 
 public class DashboardFragment extends Fragment {
 
     private DashboardViewModel dashboardViewModel;
     private FragmentDashboardBinding binding;
+    private JeedomClient jeedomClient;
+
+    private List<Scenario> mScenarios;
+    private ScenarioAdapter mScenarioAdapter;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -28,8 +39,11 @@ public class DashboardFragment extends Fragment {
         binding = FragmentDashboardBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        final TextView textView = binding.textDashboard;
-        dashboardViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+        this.mScenarios = new ArrayList<>();
+        this.mScenarioAdapter = new ScenarioAdapter(getContext(), mScenarios, this::getScenario);
+        binding.listViewScenario.setAdapter(mScenarioAdapter);
+
+        getScenario();
         return root;
     }
 
@@ -38,4 +52,26 @@ public class DashboardFragment extends Fragment {
         super.onDestroyView();
         binding = null;
     }
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        jeedomClient = new JeedomClient(getContext());
+    }
+
+    public void getScenario() {
+        new Thread(() -> {
+            try {
+                final List<Scenario> list = this.jeedomClient.listScenarios();
+                this.mScenarios.clear();
+                this.mScenarios.addAll(list);
+                logInfo("List: " + list);
+                getActivity().runOnUiThread(() -> mScenarioAdapter.notifyDataSetChanged());
+            } catch (HttpClientException e) {
+                getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Can not get scenario: " + e.getMessage(), Toast.LENGTH_LONG).show());
+            }
+        }).start();
+
+    }
+
 }

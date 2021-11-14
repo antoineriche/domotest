@@ -2,13 +2,15 @@ package com.ariche.domotest.jeedom.client;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.util.Log;
 
 import com.ariche.domotest.http.client.HttpClient;
 import com.ariche.domotest.http.error.HttpClientException;
+import com.ariche.domotest.jeedom.model.Scenario;
 import com.ariche.domotest.utils.PreferenceHelper;
 import com.ariche.domotest.utils.PropertyUtils;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -30,6 +32,7 @@ public final class JeedomClient extends HttpClient implements SharedPreferences.
         if (Objects.nonNull(raspberryAddress)) {
             setPiAddress(raspberryAddress);
         }
+        PreferenceHelper.registerSharedPreferencesListener(context, this);
     }
 
     public void setPiAddress(String piAddress) {
@@ -54,12 +57,33 @@ public final class JeedomClient extends HttpClient implements SharedPreferences.
         return super.get(endPoint);
     }
 
+    public boolean isLightOn() throws HttpClientException {
+        final String endPoint = "&type=cmd&id=67";
+        return "1".equals(super.get(endPoint));
+    }
+
     private String readRaspberryAddress() {
-        return PreferenceHelper.getPreference("pi-address", null, context);
+        return PreferenceHelper.getPreference(PreferenceHelper.PI_ADDRESS, context);
+    }
+
+    public List<Scenario> listScenarios() throws HttpClientException {
+        final Scenario[] a = super.getForType("&type=scenario", Scenario[].class);
+        return Arrays.asList(a.clone());
+    }
+
+    public void toggleScenario(final String scenarioId,
+                               final boolean start) throws HttpClientException {
+        final String action = start ? "activate" : "deactivate";
+        super.get("&type=scenario&id="+scenarioId+"&action=" + action);
     }
 
     @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-        logInfo(s);
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (PreferenceHelper.PI_ADDRESS.equalsIgnoreCase(key)) {
+            final String piAddress = PreferenceHelper.getPreference(key, context);
+            logInfo("PI Address has been updated to: " + piAddress);
+            setPiAddress(piAddress);
+        }
     }
+
 }

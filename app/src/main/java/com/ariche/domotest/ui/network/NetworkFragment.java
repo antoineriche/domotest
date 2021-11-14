@@ -11,21 +11,19 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.ariche.domotest.R;
 import com.ariche.domotest.databinding.FragmentNetworkBinding;
 import com.ariche.domotest.freebox.client.FreeBoxClient;
 import com.ariche.domotest.freebox.client.FreeBoxResponse;
 import com.ariche.domotest.freebox.model.FreeBoxApiVersion;
 import com.ariche.domotest.freebox.model.FreeBoxDevice;
-import com.ariche.domotest.freebox.model.InterfaceOutput;
 import com.ariche.domotest.freebox.model.LoginStatusOutput;
-import com.ariche.domotest.freebox.model.OpenSessionOutput;
+import com.ariche.domotest.http.error.HttpClientException;
 import com.ariche.domotest.jeedom.client.JeedomClient;
+import com.ariche.domotest.utils.PropertyUtils;
 
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Date;
-import java.util.Locale;
-
-import static com.ariche.domotest.utils.LogUtils.logInfo;
 
 public class NetworkFragment extends Fragment {
 
@@ -35,8 +33,6 @@ public class NetworkFragment extends Fragment {
     private FreeBoxClient freeBoxClient;
     private JeedomClient jeedomClient;
 
-    private boolean lightOn = false;
-
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         networkViewModel =
@@ -45,73 +41,12 @@ public class NetworkFragment extends Fragment {
         binding = FragmentNetworkBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        binding.cardView.setVisibility(View.GONE);
-        // networkViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+        initView(networkViewModel, binding);
 
-        binding.buttonAppVersion.setOnClickListener(view -> {
-            new Thread(() -> {
-                try {
-                    FreeBoxApiVersion version = freeBoxClient.getApiVersion();
-                    getActivity().runOnUiThread(() -> Toast.makeText(getContext(), version.toString(), Toast.LENGTH_SHORT).show());
-                } catch (Exception e) {
-                    getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show());
-                }
-            }).start();
-        });
+        loadFreeBoxInfo();
+        discoverRaspberryPi();
 
-        binding.buttonLoginStatus.setOnClickListener(view -> {
-            new Thread(() -> {
-                try {
-                    FreeBoxResponse<LoginStatusOutput> status = freeBoxClient.getLoginStatus();
-                    getActivity().runOnUiThread(() -> Toast.makeText(getContext(), status.getResult().getStatus(), Toast.LENGTH_SHORT).show());
-                } catch (Exception e) {
-                    getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show());
-                }
-            }).start();
-        });
-
-        binding.buttonOpenSession.setOnClickListener(view -> {
-            new Thread(() -> {
-                try {
-                    FreeBoxResponse<OpenSessionOutput> session = freeBoxClient.openSession();
-                    getActivity().runOnUiThread(() -> Toast.makeText(getContext(), session.getResult().getSessionToken(), Toast.LENGTH_SHORT).show());
-                } catch (Exception e) {
-                    getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show());
-                }
-            }).start();
-        });
-
-        binding.buttonListInterfaces.setOnClickListener(view -> {
-            new Thread(() -> {
-                try {
-                    FreeBoxResponse<InterfaceOutput[]> interfaces = freeBoxClient.listInterfaces();
-                    Arrays.stream(interfaces.getResult()).forEach(fInterface ->
-                            logInfo(String.format("%s : %d", fInterface.getName(), fInterface.getHostCount())));
-                    getActivity().runOnUiThread(() -> Toast.makeText(getContext(), interfaces.getResult().length + " interface(s) found", Toast.LENGTH_SHORT).show());
-                } catch (Exception e) {
-                    getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show());
-                }
-            }).start();
-        });
-
-        binding.buttonListDevices.setOnClickListener(view -> {
-            new Thread(() -> {
-                try {
-                    FreeBoxResponse<FreeBoxDevice[]> devices = freeBoxClient.listConnectedDevices("pub");
-                    if (devices.isSuccess()) {
-                        getActivity().runOnUiThread(() -> {
-                            Toast.makeText(getContext(), devices.getResult().length + " device(s) found", Toast.LENGTH_SHORT).show();
-                            Arrays.stream(devices.getResult())
-                                    .filter(device -> device.getName().equalsIgnoreCase("pi"))
-                                    .findFirst()
-                                    .ifPresent(this::handlePiDeviceDiscovered);
-                        });
-                    }
-                } catch (Exception e) {
-                    getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show());
-                }
-            }).start();
-        });
+        binding.buttonDiscoverPi.setOnClickListener(view -> discoverRaspberryPi());
 
         binding.buttonJeedomWeather.setOnClickListener(view -> {
             new Thread(() -> {
@@ -120,18 +55,6 @@ public class NetworkFragment extends Fragment {
                     getActivity().runOnUiThread(() -> {
                         Toast.makeText(getContext(), weather, Toast.LENGTH_SHORT).show();
                     });
-                } catch (Exception e) {
-                    getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show());
-                }
-            }).start();
-        });
-
-
-        binding.buttonJeedomLight.setOnClickListener(view -> {
-            new Thread(() -> {
-                try {
-                    jeedomClient.toggleLight(!lightOn);
-                    lightOn = !lightOn;
                 } catch (Exception e) {
                     getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show());
                 }
@@ -155,16 +78,77 @@ public class NetworkFragment extends Fragment {
     }
 
     private void handlePiDeviceDiscovered(final FreeBoxDevice device) {
-        binding.cardView.setVisibility(View.VISIBLE);
+        final String sDate = new SimpleDateFormat("yyyy/MM/dd HH:mm.ss")
+                .format(device.getLastActivity() * 1_000);
+
+        binding.textviewRaspberryName.setText(device.getName());
+        binding.textviewRaspberryAddress.setText(device.getAddress());
+        binding.textviewRaspberryLastActivity.setText(sDate);
         jeedomClient.setPiAddress(device.getAddress());
-        final String s = String.format(Locale.FRANCE,
-                "Device: %s\nVendor: %s\nAddress: %s\nLast activity: %s\nLast time reachable: %s",
-                device.getName(),
-                device.getVendorName(), device.getAddress(),
-                new Date(device.getLastActivity() * 1_000),
-                new Date(device.getLastTimeReachable() * 1_000));
-        logInfo(s);
-        binding.textviewPi.setText(s);
+    }
+
+    private void loadFreeBoxInfo() {
+        new Thread(() -> {
+            try {
+                final FreeBoxApiVersion version = freeBoxClient.getApiVersion();
+                binding.textviewModelName.setText(version.getBoxModelName());
+                binding.textviewDeviceName.setText(version.getDeviceName());
+                binding.textviewDeviceType.setText(version.getDeviceType());
+            } catch (HttpClientException e) {
+                getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Can not get FreeBox info", Toast.LENGTH_SHORT).show());
+            }
+
+            try {
+                final FreeBoxResponse<LoginStatusOutput> status = freeBoxClient.getLoginStatus();
+                binding.textviewLoginStatus.setText(status.getResult().getStatus());
+            } catch (HttpClientException e) {
+                getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show());
+            }
+        }).start();
+    }
+
+    private void discoverRaspberryPi() {
+        new Thread(() -> {
+            try {
+                freeBoxClient.openSession();
+            } catch (HttpClientException e) {
+                getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Can not open session: " + e.getMessage(), Toast.LENGTH_LONG).show());
+            }
+
+            try {
+                final String piName = PropertyUtils.loadFreeBoxProperties(getContext()).getProperty("raspberry.host");
+                final FreeBoxResponse<FreeBoxDevice[]> devices = freeBoxClient.listPublicInterfaceConnectedDevices();
+
+                final String devicesFound = getResources().getQuantityString(R.plurals.network_devices_found, devices.getResult().length, devices.getResult().length);
+                binding.textviewConnectedDevices.setText(devicesFound);
+                if (devices.isSuccess()) {
+                    Arrays.stream(devices.getResult())
+                            .filter(device -> device.getName().equalsIgnoreCase(piName))
+                            .findFirst()
+                            .ifPresent(this::handlePiDeviceDiscovered);
+                }
+            } catch (HttpClientException e) {
+                getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Can not discover pi address: " + e.getMessage(), Toast.LENGTH_LONG).show());
+            }
+
+        }).start();
+    }
+
+
+    private void initView(final NetworkViewModel networkViewModel,
+                          final FragmentNetworkBinding binding) {
+        // FreeBox
+        networkViewModel.getMFreeBoxDeviceName().observe(getViewLifecycleOwner(), binding.textviewDeviceName::setText);
+        networkViewModel.getMFreeBoxModelName().observe(getViewLifecycleOwner(), binding.textviewModelName::setText);
+        networkViewModel.getMFreeBoxDeviceType().observe(getViewLifecycleOwner(), binding.textviewDeviceType::setText);
+        networkViewModel.getMFreeBoxLoginStatus().observe(getViewLifecycleOwner(), binding.textviewLoginStatus::setText);
+        networkViewModel.getMFreeBoxInterfacesCount().observe(getViewLifecycleOwner(), binding.textviewInterfacesCount::setText);
+        networkViewModel.getMFreeBoxDevicesCount().observe(getViewLifecycleOwner(), binding.textviewInterfacesCount::setText);
+
+        // Raspberry
+        networkViewModel.getMRaspberryName().observe(getViewLifecycleOwner(), binding.textviewRaspberryName::setText);
+        networkViewModel.getMRaspberryAddress().observe(getViewLifecycleOwner(), binding.textviewRaspberryAddress::setText);
+        networkViewModel.getMRaspberryLastActivity().observe(getViewLifecycleOwner(), binding.textviewRaspberryLastActivity::setText);
     }
 
 }
