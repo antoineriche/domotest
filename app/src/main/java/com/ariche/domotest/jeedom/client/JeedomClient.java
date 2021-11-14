@@ -46,9 +46,26 @@ public final class JeedomClient extends HttpClient implements SharedPreferences.
         super.setBaseUrl(baseUrl);
     }
 
-    public String getWeather() throws HttpClientException {
-        final String endPoint = "&type=cmd&id=43";
-        return super.get(endPoint);
+    public List<String> getWeather() throws HttpClientException {
+        // final String endPoint = "&type=cmd&id=43";
+        final String condition1 = super.get("&type=cmd&id=54");
+        final String condition2 = super.get("&type=cmd&id=56");
+        final String condition3 = super.get("&type=cmd&id=58");
+        final String condition4 = super.get("&type=cmd&id=60");
+        final String temperature = super.get("&type=cmd&id=34") + " °C";
+
+        String sunrise = super.get("&type=cmd&id=40");
+        String hour = String.valueOf(sunrise.charAt(0));
+        String minute = sunrise.substring(1);
+        sunrise = hour + ":" + minute;
+
+        String sunset = super.get("&type=cmd&id=39");
+        hour = String.valueOf(sunset.charAt(0)) + String.valueOf(sunset.charAt(1));
+        minute = sunset.substring(2);
+        sunset = hour + ":" + minute;
+
+
+        return Arrays.asList(condition1, condition2, condition3, condition4, temperature, sunrise, sunset);
     }
 
     public String toggleLight(boolean on) throws HttpClientException {

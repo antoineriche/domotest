@@ -1,5 +1,6 @@
 package com.ariche.domotest.ui.network;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -51,7 +52,8 @@ public class NetworkFragment extends Fragment {
         binding.buttonJeedomWeather.setOnClickListener(view -> {
             new Thread(() -> {
                 try {
-                    final String weather = jeedomClient.getWeather();
+                    @SuppressLint("NewApi")
+                    final String weather = String.join("\n", jeedomClient.getWeather());
                     getActivity().runOnUiThread(() -> {
                         Toast.makeText(getContext(), weather, Toast.LENGTH_SHORT).show();
                     });

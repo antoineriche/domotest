@@ -155,6 +155,7 @@
         android:id="@+id/button_jeedom_weather"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textColor="@color/white"
         app:layout_constraintTop_toBottomOf="@id/card_view_raspberry"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
