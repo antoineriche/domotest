@@ -8,11 +8,46 @@
     tools:context=".ui.network.NetworkFragment">
 
     <androidx.cardview.widget.CardView
+        android:id="@+id/card_view_wifi"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardElevation="10dp"
+        android:layout_marginBottom="25dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="15dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:textColor="@color/blue_700"
+                android:textStyle="bold"
+                android:text="Use WiFI"/>
+
+            <Switch
+                android:id="@+id/switch_use_wifi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true" />
+
+        </RelativeLayout>
+
+    </androidx.cardview.widget.CardView>
+
+
+    <androidx.cardview.widget.CardView
         android:id="@+id/card_view_free_box"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:elevation="50dp"
-        app:layout_constraintTop_toTopOf="parent"
+        android:elevation="10dp"
+        app:layout_constraintTop_toBottomOf="@id/card_view_wifi"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -89,7 +124,7 @@
         android:id="@+id/card_view_raspberry"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:elevation="50dp"
+        app:cardElevation="10dp"
         android:layout_marginVertical="20dp"
         app:layout_constraintTop_toBottomOf="@id/card_view_free_box"
         app:layout_constraintStart_toStartOf="parent"

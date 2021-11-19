@@ -20,6 +20,7 @@ import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.codec.digest.HmacUtils;
 
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.Properties;
 
 import okhttp3.Headers;
@@ -40,7 +41,7 @@ public final class FreeBoxClient extends HttpClient {
     private String sessionToken;
 
     public FreeBoxClient(final Context context) {
-        super(PropertyUtils.loadFreeBoxProperties(context).getProperty("freebox.base_url"));
+        super(PropertyUtils.loadFreeBoxProperties(context).getProperty("freebox.local.base_url"));
         this.context = context;
         this.properties = PropertyUtils.loadFreeBoxProperties(context);
         this.sessionToken = readFreeBoxSessionToken();
@@ -99,19 +100,19 @@ public final class FreeBoxClient extends HttpClient {
                 new TypeReference<FreeBoxResponse<FreeBoxDevice[]>>() {});
 
         if (response.isSuccess()) {
-            final String piName = properties.getProperty("raspberry.host");
+            final String piName = properties.getProperty("freebox.raspberry.host");
             Arrays.stream(response.getResult())
                     .filter(device -> device.getName().equalsIgnoreCase(piName))
                     .findFirst()
                     .map(FreeBoxDevice::getAddress)
-                    .ifPresent(this::storeRaspberryAddress);
+                    .ifPresent(s -> PreferenceHelper.storeRaspberryAddress(s, context));
         }
 
         return response;
     }
 
     public FreeBoxResponse<FreeBoxDevice[]> listPublicInterfaceConnectedDevices() throws HttpClientException {
-        final String publicInterface = properties.getProperty("raspberry.interface");
+        final String publicInterface = properties.getProperty("freebox.raspberry.interface");
         return listConnectedDevices(publicInterface);
     }
 
@@ -119,11 +120,27 @@ public final class FreeBoxClient extends HttpClient {
         return PreferenceHelper.getPreference(PreferenceHelper.FREE_BOX_SESSION_TOKEN, context);
     }
 
-    private void storeRaspberryAddress(final String address) {
-        PreferenceHelper.storePreference(PreferenceHelper.PI_ADDRESS, address, context);
+    public static String getFreeBoxSSID(final Context context) {
+        final Properties properties = PropertyUtils.loadFreeBoxProperties(context);
+        return properties.getProperty("freebox.ssid");
     }
 
     private void storeSessionToken(final String sessionToken) {
         PreferenceHelper.storePreference(PreferenceHelper.FREE_BOX_SESSION_TOKEN, sessionToken, context);
+    }
+
+    public Optional<String> getLocalJeedomAddress() throws HttpClientException {
+        // 1. Open Session with Local FreeBox
+        openSession();
+
+        // 2. Search for Raspberry PI and save local address
+        final String piName = properties.getProperty("freebox.raspberry.host");
+        final FreeBoxResponse<FreeBoxDevice[]> devices = listPublicInterfaceConnectedDevices();
+        return devices.isSuccess() ?
+                Arrays.stream(devices.getResult())
+                        .filter(device -> device.getName().equalsIgnoreCase(piName))
+                        .map(FreeBoxDevice::getAddress)
+                        .findFirst()
+                : Optional.empty();
     }
 }

@@ -1,6 +1,5 @@
 package com.ariche.domotest.ui.network;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -21,10 +20,13 @@ import com.ariche.domotest.freebox.model.FreeBoxDevice;
 import com.ariche.domotest.freebox.model.LoginStatusOutput;
 import com.ariche.domotest.http.error.HttpClientException;
 import com.ariche.domotest.jeedom.client.JeedomClient;
+import com.ariche.domotest.utils.PreferenceHelper;
 import com.ariche.domotest.utils.PropertyUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Properties;
+import java.util.stream.Collectors;
 
 public class NetworkFragment extends Fragment {
 
@@ -44,16 +46,19 @@ public class NetworkFragment extends Fragment {
 
         initView(networkViewModel, binding);
 
-        loadFreeBoxInfo();
-        discoverRaspberryPi();
+        // TODO: Automatically detect WiFi usage
+        binding.switchUseWifi.setEnabled(false);
+
+        // TODO: uncomment loadFreeBoxInfo();
+        // TODO: uncomment discoverRaspberryPi();
 
         binding.buttonDiscoverPi.setOnClickListener(view -> discoverRaspberryPi());
 
         binding.buttonJeedomWeather.setOnClickListener(view -> {
             new Thread(() -> {
                 try {
-                    @SuppressLint("NewApi")
-                    final String weather = String.join("\n", jeedomClient.getWeather());
+                    final String weather = jeedomClient.getWeather().stream()
+                            .collect(Collectors.joining("\n"));
                     getActivity().runOnUiThread(() -> {
                         Toast.makeText(getContext(), weather, Toast.LENGTH_SHORT).show();
                     });
@@ -77,6 +82,7 @@ public class NetworkFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+        jeedomClient = null;
     }
 
     private void handlePiDeviceDiscovered(final FreeBoxDevice device) {
@@ -118,7 +124,7 @@ public class NetworkFragment extends Fragment {
             }
 
             try {
-                final String piName = PropertyUtils.loadFreeBoxProperties(getContext()).getProperty("raspberry.host");
+                final String piName = PropertyUtils.loadFreeBoxProperties(getContext()).getProperty("freebox.raspberry.host");
                 final FreeBoxResponse<FreeBoxDevice[]> devices = freeBoxClient.listPublicInterfaceConnectedDevices();
 
                 final String devicesFound = getResources().getQuantityString(R.plurals.network_devices_found, devices.getResult().length, devices.getResult().length);

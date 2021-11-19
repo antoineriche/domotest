@@ -13,7 +13,7 @@
         <entry key="app/src/main/res/drawable/ic_notifications_black_24dp.xml" value="0.3802083333333333" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.10612968591691996" />
         <entry key="app/src/main/res/layout/fragment_dashboard.xml" value="0.10612968591691996" />
-        <entry key="app/src/main/res/layout/fragment_home.xml" value="0.10612968591691996" />
+        <entry key="app/src/main/res/layout/fragment_home.xml" value="0.1" />
         <entry key="app/src/main/res/layout/fragment_lights.xml" value="0.3640625" />
         <entry key="app/src/main/res/layout/fragment_network.xml" value="0.32934131736526945" />
         <entry key="app/src/main/res/layout/list_item_scenario.xml" value="0.3640625" />

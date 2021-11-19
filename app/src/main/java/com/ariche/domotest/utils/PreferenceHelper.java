@@ -21,11 +21,19 @@ public final class PreferenceHelper {
         return getPreference(key, null, context);
     }
 
-    public static void storePreference(final String key,
-                                       final String value,
-                                       final Context context) {
+    public static boolean storePreference(final String key,
+                                          final String value,
+                                          final Context context) {
         final SharedPreferences prefs = getRootPreferences(context);
-        prefs.edit().putString(key, value).apply();
+        if (!prefs.getString(key, "").equalsIgnoreCase(value)) {
+            prefs.edit().putString(key, value).apply();
+            return true;
+        }
+        return false;
+    }
+
+    public static void storeRaspberryAddress(final String address, final Context context) {
+        storePreference(PreferenceHelper.PI_ADDRESS, address, context);
     }
 
     public static SharedPreferences getRootPreferences(final Context context) {
