@@ -1,7 +1,6 @@
 package com.ariche.domotest.ui.home;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,11 +18,10 @@ import com.ariche.domotest.utils.PreferenceHelper;
 
 import java.util.List;
 
-public class HomeFragment extends Fragment implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class HomeFragment extends Fragment {
 
     private HomeViewModel homeViewModel;
     private FragmentHomeBinding binding;
-    private int count;
     private JeedomClient mJeedomClient;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -31,14 +29,9 @@ public class HomeFragment extends Fragment implements SharedPreferences.OnShared
         homeViewModel =
                 new ViewModelProvider(this).get(HomeViewModel.class);
 
+        PreferenceHelper.registerSharedPreferencesListener(getContext(), mJeedomClient);
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
-
-        final String pi = PreferenceHelper.getPreference(PreferenceHelper.PI_ADDRESS, getContext());
-        binding.tvJeedomAddress.setText(pi);
-
-        //binding.tvJeedomAddress;
-
         loadWeather();
         return root;
     }
@@ -47,14 +40,12 @@ public class HomeFragment extends Fragment implements SharedPreferences.OnShared
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
-        mJeedomClient = null;
-        PreferenceHelper.unregisterSharedPreferencesListener(getContext(), this);
+        PreferenceHelper.unregisterSharedPreferencesListener(getContext(), mJeedomClient);
     }
 
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
-        PreferenceHelper.registerSharedPreferencesListener(context, this);
         this.mJeedomClient = new JeedomClient(context);
     }
 
@@ -78,14 +69,4 @@ public class HomeFragment extends Fragment implements SharedPreferences.OnShared
 
     }
 
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (PreferenceHelper.PI_ADDRESS.equalsIgnoreCase(key)) {
-            final String s0 = binding.tvJeedomAddress.getText() != null ?
-                    binding.tvJeedomAddress.getText().toString() : "";
-            final String s = s0.concat("\n")
-                    .concat((count++) +  PreferenceHelper.getPreference(key, getContext()));
-            binding.tvJeedomAddress.setText(s);
-        }
-    }
 }

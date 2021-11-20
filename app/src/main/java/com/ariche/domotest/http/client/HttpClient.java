@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Objects;
 
 import lombok.Getter;
@@ -129,7 +130,13 @@ public abstract class HttpClient {
                                   final String method,
                                   final RequestBody body,
                                   final Headers headers) throws HttpClientException {
-        final String url = baseUrl + endPoint;
+        final String url;
+
+        try {
+            url = new URL(baseUrl + endPoint).toString();
+        } catch (Exception e) {
+            throw new HttpClientException(HttpClientError.REQUEST, e.getMessage(), e);
+        }
 
         final Request.Builder builder = new Request.Builder()
                 .method(method, body)

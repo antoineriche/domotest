@@ -28,9 +28,9 @@ public final class JeedomClient extends HttpClient implements SharedPreferences.
     private static final Integer WEATHER_SUNSET = 21;
 
     /* LIVING LIGHT */
-    private static final Integer LIGHT_STATUS = 1;
-    private static final Integer LIGHT_SWITCH_ON = 2;
-    private static final Integer LIGHT_SWITCH_OFF = 3;
+    private static final Integer LIGHT_STATUS = 8;
+    private static final Integer LIGHT_SWITCH_ON = 9;
+    private static final Integer LIGHT_SWITCH_OFF = 10;
     private static final Integer LIGHT_POWER = 4;
     private static final Integer LIGHT_BRIGHTNESS = 5;
     private static final Integer LIGHT_CONSUMPTION = 6;
@@ -63,7 +63,6 @@ public final class JeedomClient extends HttpClient implements SharedPreferences.
         if (Objects.nonNull(raspberryAddress)) {
             setPiAddress(raspberryAddress);
         }
-        PreferenceHelper.registerSharedPreferencesListener(context, this);
     }
 
     public void setPiAddress(String piAddress) {
@@ -174,7 +173,6 @@ public final class JeedomClient extends HttpClient implements SharedPreferences.
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if (PreferenceHelper.PI_ADDRESS.equalsIgnoreCase(key)) {
             final String piAddress = PreferenceHelper.getPreference(key, context);
-            Toast.makeText(context, "JeeDom address has been updated: " + piAddress, Toast.LENGTH_SHORT).show();
             setPiAddress(piAddress);
         }
     }

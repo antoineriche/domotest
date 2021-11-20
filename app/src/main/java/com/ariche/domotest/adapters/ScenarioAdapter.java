@@ -30,7 +30,7 @@ public final class ScenarioAdapter extends BaseAdapter {
                            Listener listener) {
         this.mScenarioList = scenarioList;
         this.mJeedomClient = new JeedomClient(context);
-        this. layoutInflater = LayoutInflater.from(context);
+        this.layoutInflater = LayoutInflater.from(context);
         this.listener = listener;
     }
 

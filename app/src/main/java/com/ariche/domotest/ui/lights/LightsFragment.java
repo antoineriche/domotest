@@ -14,6 +14,9 @@ import androidx.lifecycle.ViewModelProvider;
 import com.ariche.domotest.databinding.FragmentLightsBinding;
 import com.ariche.domotest.http.error.HttpClientException;
 import com.ariche.domotest.jeedom.client.JeedomClient;
+import com.ariche.domotest.utils.PreferenceHelper;
+
+import java.util.prefs.PreferenceChangeEvent;
 
 import static com.ariche.domotest.utils.LogUtils.logError;
 
@@ -34,6 +37,7 @@ public class LightsFragment extends Fragment {
 
         binding = FragmentLightsBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
+        PreferenceHelper.registerSharedPreferencesListener(getContext(), jeedomClient);
 
         binding.switchLightsLivingRoom.setClickable(false);
         binding.switchLightsLivingRoom.setEnabled(false);
@@ -64,7 +68,7 @@ public class LightsFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
-        jeedomClient = null;
+        PreferenceHelper.unregisterSharedPreferencesListener(getContext(), jeedomClient);
     }
 
     @Override
@@ -129,7 +133,6 @@ public class LightsFragment extends Fragment {
             } catch (HttpClientException e) {
                 logError("can not get brightness from ceiling light", e);
             }
-
         }).start();
     }
 

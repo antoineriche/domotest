@@ -1,6 +1,7 @@
 package com.ariche.domotest.ui.network;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -25,10 +27,9 @@ import com.ariche.domotest.utils.PropertyUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Properties;
-import java.util.stream.Collectors;
+import java.util.Locale;
 
-public class NetworkFragment extends Fragment {
+public class NetworkFragment extends Fragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     private NetworkViewModel networkViewModel;
     private FragmentNetworkBinding binding;
@@ -41,32 +42,18 @@ public class NetworkFragment extends Fragment {
         networkViewModel =
                 new ViewModelProvider(this).get(NetworkViewModel.class);
 
+        PreferenceHelper.registerSharedPreferencesListener(getContext(), this, jeedomClient);
         binding = FragmentNetworkBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
         initView(networkViewModel, binding);
-
-        // TODO: Automatically detect WiFi usage
-        binding.switchUseWifi.setEnabled(false);
-
+        binding.tvJeedomAddress.setText(PreferenceHelper.getPreference(PreferenceHelper.PI_ADDRESS, getContext()));
+        binding.switchUseWifi.setClickable(false);
+        binding.switchUseWifi.setChecked(PreferenceHelper.getBooleanPreference(PreferenceHelper.USE_WIFI, getContext()));
         // TODO: uncomment loadFreeBoxInfo();
         // TODO: uncomment discoverRaspberryPi();
 
         binding.buttonDiscoverPi.setOnClickListener(view -> discoverRaspberryPi());
-
-        binding.buttonJeedomWeather.setOnClickListener(view -> {
-            new Thread(() -> {
-                try {
-                    final String weather = jeedomClient.getWeather().stream()
-                            .collect(Collectors.joining("\n"));
-                    getActivity().runOnUiThread(() -> {
-                        Toast.makeText(getContext(), weather, Toast.LENGTH_SHORT).show();
-                    });
-                } catch (Exception e) {
-                    getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show());
-                }
-            }).start();
-        });
 
         return root;
     }
@@ -82,11 +69,11 @@ public class NetworkFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
-        jeedomClient = null;
+        PreferenceHelper.unregisterSharedPreferencesListener(getContext(), this, jeedomClient);
     }
 
     private void handlePiDeviceDiscovered(final FreeBoxDevice device) {
-        final String sDate = new SimpleDateFormat("yyyy/MM/dd HH:mm.ss")
+        final String sDate = new SimpleDateFormat("yyyy/MM/dd HH:mm.ss", Locale.FRANCE)
                 .format(device.getLastActivity() * 1_000);
 
         binding.textviewRaspberryName.setText(device.getName());
@@ -159,4 +146,15 @@ public class NetworkFragment extends Fragment {
         networkViewModel.getMRaspberryLastActivity().observe(getViewLifecycleOwner(), binding.textviewRaspberryLastActivity::setText);
     }
 
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (PreferenceHelper.PI_ADDRESS.equalsIgnoreCase(key)) {
+            binding.tvJeedomAddress.setText(PreferenceHelper.getPreference(key, getContext()));
+        }
+
+        if (PreferenceHelper.USE_WIFI.equalsIgnoreCase(key)) {
+            binding.switchUseWifi.setChecked(PreferenceHelper.getBooleanPreference(key, getContext()));
+        }
+    }
 }

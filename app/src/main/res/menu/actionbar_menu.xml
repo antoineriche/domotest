@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/wifi_enabled"
+        android:icon="@drawable/ic_baseline_wifi_24"
+        android:title="Text to be seen by user"
+        app:showAsAction="always"
+        android:orderInCategory="0"/>
+
+    <item
+        android:id="@+id/wifi_disabled"
+        android:icon="@drawable/ic_baseline_wifi_off_24"
+        android:title="Text to be seen by user"
+        app:showAsAction="always"
+        android:orderInCategory="1"/>
+
+</menu>

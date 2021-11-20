@@ -16,6 +16,7 @@ import com.ariche.domotest.databinding.FragmentDashboardBinding;
 import com.ariche.domotest.http.error.HttpClientException;
 import com.ariche.domotest.jeedom.client.JeedomClient;
 import com.ariche.domotest.jeedom.model.Scenario;
+import com.ariche.domotest.utils.PreferenceHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +37,7 @@ public class DashboardFragment extends Fragment {
         dashboardViewModel =
                 new ViewModelProvider(this).get(DashboardViewModel.class);
 
+        PreferenceHelper.registerSharedPreferencesListener(getContext(), jeedomClient);
         binding = FragmentDashboardBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
@@ -51,7 +53,7 @@ public class DashboardFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
-        jeedomClient = null;
+        PreferenceHelper.unregisterSharedPreferencesListener(getContext(), jeedomClient);
     }
 
     @Override

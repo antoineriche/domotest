@@ -4,11 +4,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.view.Menu;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -24,7 +26,7 @@ import com.ariche.domotest.jeedom.client.JeedomClient;
 import com.ariche.domotest.utils.PreferenceHelper;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     private ActivityMainBinding binding;
     private BroadcastReceiver mBroadcastReceiver;
@@ -37,12 +39,14 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         BottomNavigationView navView = findViewById(R.id.nav_view);
+        PreferenceHelper.registerSharedPreferencesListener(this, this);
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.navigation_home, R.id.navigation_dashboard,
                 R.id.navigation_notifications, R.id.navigation_lights, R.id.navigation_network)
                 .build();
+
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
@@ -52,11 +56,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.actionbar_menu, menu);
+        final boolean wifiUsed = PreferenceHelper.getBooleanPreference(PreferenceHelper.USE_WIFI, this);
+        menu.findItem(R.id.wifi_enabled).setVisible(wifiUsed);
+        menu.findItem(R.id.wifi_disabled).setVisible(!wifiUsed);
+        return true;
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         if (this.mBroadcastReceiver != null) {
             unregisterReceiver(this.mBroadcastReceiver);
         }
+        PreferenceHelper.unregisterSharedPreferencesListener(this, this);
     }
 
     private void registerBroadcastReceiver() {
@@ -78,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
                         discoverLocalJeedomAddress();
                     } else {
                         final String jeedomBaseURL = JeedomClient.buildPublicURL(context);
+                        PreferenceHelper.storeUseWiFi(false, context);
                         PreferenceHelper.storeRaspberryAddress(jeedomBaseURL, context);
                     }
                 }
@@ -101,7 +116,24 @@ public class MainActivity extends AppCompatActivity {
                 jeedomAddress =  JeedomClient.buildPublicURL(this);
             }
 
+            final boolean isWiFiUsed = jeedomAddress.startsWith("192.168");
+            PreferenceHelper.storeUseWiFi(isWiFiUsed, this);
             PreferenceHelper.storeRaspberryAddress(jeedomAddress, this);
         }).start();
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        final boolean wifiUsed = PreferenceHelper.getBooleanPreference(PreferenceHelper.USE_WIFI, this);
+        menu.findItem(R.id.wifi_enabled).setVisible(wifiUsed);
+        menu.findItem(R.id.wifi_disabled).setVisible(!wifiUsed);
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+        if (PreferenceHelper.USE_WIFI.equalsIgnoreCase(s)) {
+            invalidateOptionsMenu();
+        }
     }
 }
