@@ -49,6 +49,10 @@ public final class JeedomClient extends HttpClient implements SharedPreferences.
     private static final Integer LIGHT_PATH_SWITCH_ON = 13;
     private static final Integer LIGHT_PATH_SWITCH_OFF = 14;
 
+    private static final Integer TV_STATUS = 98;
+    private static final Integer TV_TOGGLE = 99;
+
+
     private String piAddress;
     private final Context context;
     private final String apiKey;
@@ -117,6 +121,10 @@ public final class JeedomClient extends HttpClient implements SharedPreferences.
         return sendJeedomCommand(commandId);
     }
 
+    public String toggleTV() throws HttpClientException {
+        return sendJeedomCommand(TV_TOGGLE);
+    }
+
     public boolean isLightOn(final LightsFragment.Light light) throws HttpClientException {
         switch (light) {
             case LIVING:
@@ -128,6 +136,10 @@ public final class JeedomClient extends HttpClient implements SharedPreferences.
             default:
                 return false;
         }
+    }
+
+    public boolean isTVOn() throws HttpClientException {
+        return "1".equals(sendJeedomCommand(TV_STATUS));
     }
 
     public int getCeilingBrightnessValue() throws HttpClientException {

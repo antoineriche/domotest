@@ -1,10 +1,12 @@
 package com.ariche.domotest.ui.lights;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -15,8 +17,6 @@ import com.ariche.domotest.databinding.FragmentLightsBinding;
 import com.ariche.domotest.http.error.HttpClientException;
 import com.ariche.domotest.jeedom.client.JeedomClient;
 import com.ariche.domotest.utils.PreferenceHelper;
-
-import java.util.prefs.PreferenceChangeEvent;
 
 import static com.ariche.domotest.utils.LogUtils.logError;
 
@@ -38,6 +38,10 @@ public class LightsFragment extends Fragment {
         binding = FragmentLightsBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
         PreferenceHelper.registerSharedPreferencesListener(getContext(), jeedomClient);
+
+        binding.switchTv.setClickable(false);
+        binding.switchTv.setEnabled(false);
+        binding.switchTv.setOnClickListener(view -> toggleTV());
 
         binding.switchLightsLivingRoom.setClickable(false);
         binding.switchLightsLivingRoom.setEnabled(false);
@@ -148,21 +152,43 @@ public class LightsFragment extends Fragment {
         }).start();
     }
 
+    private void toggleTV() {
+        new Thread(() -> {
+            try {
+                final boolean isOn = jeedomClient.isTVOn();
+                jeedomClient.toggleTV();
+                toggleSwitch(!isOn, binding.switchTv);
+            } catch (Exception e) {
+                getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Can not toggle tv: " + e.getMessage(), Toast.LENGTH_LONG).show());
+            }
+        }).start();
+    }
+
+
+    @SuppressLint("UseSwitchCompatOrMaterialCode")
     private void toggleSwitch(final boolean isOn,
                               final Light light) {
-        getActivity().runOnUiThread(() -> {
-            switch (light) {
-                case LIVING:
-                    binding.switchLightsLivingRoom.setChecked(isOn);
-                    break;
-                case LIGHT_PATH:
-                    binding.switchLightsPath.setChecked(isOn);
-                    break;
-                case LIVING_CEILING:
-                    binding.switchCeilingLight.setChecked(isOn);
-                    break;
-            }
-        });
+        final Switch switchComponent;
+        switch (light) {
+            case LIVING:
+                switchComponent = binding.switchLightsLivingRoom;
+                break;
+            case LIGHT_PATH:
+                switchComponent = binding.switchLightsPath;
+                break;
+            case LIVING_CEILING:
+                switchComponent = binding.switchCeilingLight;
+                break;
+            default:
+                switchComponent = null;
+        }
+
+        toggleSwitch(isOn, switchComponent);
+    }
+
+    private void toggleSwitch(final boolean isOn,
+                              final Switch switchComponent) {
+        getActivity().runOnUiThread(() -> switchComponent.setChecked(isOn));
     }
 
     public enum Light {
